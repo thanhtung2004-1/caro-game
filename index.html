@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Caro Game</title>
+    <title>Ng Yến Nhi</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -42,7 +42,7 @@
     </style>
 </head>
 <body>
-<h1>Caro Game</h1>
+<h1>Caro với Ng Yến Nhi</h1>
 <div id="scoreBoard">
     <input type="text" id="playerName" placeholder="Tên người chơi" />
     <button onclick="game.addPlayer()">Thêm</button>
@@ -87,36 +87,94 @@
         }
 
         makeMove(row, col) {
-            if (this.board[row][col] !== '') return;
-            this.board[row][col] = this.turn;
+            if (this.board[row][col] !== '' || this.turn !== 'X') return;
+            this.board[row][col] = 'X';
             if (this.checkWin(row, col)) {
-                alert(`${this.turn} thắng!`);
+                alert('Bạn thắng!');
                 this.updateScore();
                 this.resetBoard();
             } else {
-                this.turn = this.turn === 'X' ? 'O' : 'X';
-                this.renderBoard();
+                this.turn = 'O';
+                setTimeout(() => this.aiMove(), 300);
+            }
+            this.renderBoard();
+        }
+
+        aiMove() {
+            let bestScore = -Infinity;
+            let move = null;
+
+            for (let i = 0; i < this.size; i++) {
+                for (let j = 0; j < this.size; j++) {
+                    if (this.board[i][j] === '') {
+                        this.board[i][j] = 'O';
+                        const score = this.evaluateBoard(i, j, 'O') - this.evaluateBoard(i, j, 'X');
+                        this.board[i][j] = '';
+                        if (score > bestScore) {
+                            bestScore = score;
+                            move = { i, j };
+                        }
+                    }
+                }
+            }
+
+            if (move) {
+                this.board[move.i][move.j] = 'O';
+                if (this.checkWin(move.i, move.j)) {
+                    alert('Máy thắng!');
+                    this.resetBoard();
+                } else {
+                    this.turn = 'X';
+                    this.renderBoard();
+                }
             }
         }
 
-        checkWin(row, col) {
+        evaluateBoard(row, col, symbol) {
             const directions = [
                 [0, 1], [1, 0], [1, 1], [1, -1]
             ];
+            let score = 0;
             for (const [dx, dy] of directions) {
                 let count = 1;
                 for (let step = 1; step < 5; step++) {
                     const x = row + dx * step;
                     const y = col + dy * step;
                     if (x < 0 || y < 0 || x >= this.size || y >= this.size) break;
-                    if (this.board[x][y] === this.turn) count++;
+                    if (this.board[x][y] === symbol) count++;
                     else break;
                 }
                 for (let step = 1; step < 5; step++) {
                     const x = row - dx * step;
                     const y = col - dy * step;
                     if (x < 0 || y < 0 || x >= this.size || y >= this.size) break;
-                    if (this.board[x][y] === this.turn) count++;
+                    if (this.board[x][y] === symbol) count++;
+                    else break;
+                }
+                score = Math.max(score, count);
+            }
+            return score;
+        }
+
+        checkWin(row, col) {
+            const directions = [
+                [0, 1], [1, 0], [1, 1], [1, -1]
+            ];
+            const symbol = this.board[row][col];
+            for (const [dx, dy] of directions) {
+                let count = 1;
+                for (let step = 1; step < 5; step++) {
+                    const x = row + dx * step;
+                    const y = col + dy * step;
+                    if (x < 0 || y < 0 || x >= this.size || y >= this.size) break;
+                    if (this.board[x][y] === symbol) count++;
+                    else break;
+                }
+                for (let step = 1; step < 5; step++) {
+                    const x = row - dx * step;
+                    const y = col - dy * step;
+                    if (x < 0 || y < 0 || x >= this.size || y >= this.size) break;
+                    if (this.board[x][y] === symbol) count++;
                     else break;
                 }
                 if (count >= 5) return true;
