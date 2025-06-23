@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ng Yến Nhi</title>
+    <title>Game caro</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -27,6 +27,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            touch-action: manipulation;
         }
         #scoreBoard {
             margin: 20px auto;
@@ -42,7 +43,7 @@
     </style>
 </head>
 <body>
-<h1>Caro với Ng Yến Nhi</h1>
+<h1>Game caro</h1>
 <div id="scoreBoard">
     <input type="text" id="playerName" placeholder="Tên người chơi" />
     <button onclick="game.addPlayer()">Thêm</button>
@@ -81,6 +82,7 @@
                     div.className = 'cell';
                     div.textContent = this.board[i][j];
                     div.onclick = () => this.makeMove(i, j);
+                    div.ontouchstart = () => this.makeMove(i, j);
                     gameDiv.appendChild(div);
                 }
             }
@@ -89,15 +91,17 @@
         makeMove(row, col) {
             if (this.board[row][col] !== '' || this.turn !== 'X') return;
             this.board[row][col] = 'X';
+            this.renderBoard();
             if (this.checkWin(row, col)) {
-                alert('Bạn thắng!');
-                this.updateScore();
-                this.resetBoard();
+                setTimeout(() => {
+                    alert('Bạn thắng!');
+                    this.updateScore();
+                    this.resetBoard();
+                }, 100);
             } else {
                 this.turn = 'O';
                 setTimeout(() => this.aiMove(), 300);
             }
-            this.renderBoard();
         }
 
         aiMove() {
@@ -120,12 +124,14 @@
 
             if (move) {
                 this.board[move.i][move.j] = 'O';
+                this.renderBoard();
                 if (this.checkWin(move.i, move.j)) {
-                    alert('Máy thắng!');
-                    this.resetBoard();
+                    setTimeout(() => {
+                        alert('Máy thắng!');
+                        this.resetBoard();
+                    }, 100);
                 } else {
                     this.turn = 'X';
-                    this.renderBoard();
                 }
             }
         }
