@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Caro Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f0f0f0;
+        }
+        #game {
+            display: grid;
+            grid-template-columns: repeat(30, 30px);
+            gap: 1px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .cell {
+            width: 30px;
+            height: 30px;
+            font-size: 1.2em;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #scoreBoard {
+            margin: 20px auto;
+            width: 300px;
+            background: #fff;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        input, button {
+            margin: 5px;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+<h1>Caro Game</h1>
+<div id="scoreBoard">
+    <input type="text" id="playerName" placeholder="Tên người chơi" />
+    <button onclick="game.addPlayer()">Thêm</button>
+    <button onclick="game.saveScore()">Lưu điểm</button>
+    <input type="text" id="searchName" placeholder="Tìm kiếm tên gần đúng" />
+    <button onclick="game.searchPlayer()">Tìm</button>
+    <ul id="playerList"></ul>
+</div>
+<div id="game"></div>
+
+<script>
+    class Player {
+        constructor(name, score = 0) {
+            this.name = name;
+            this.score = score;
+        }
+    }
+
+    class Game {
+        constructor(size = 30) {
+            this.size = size;
+            this.board = Array.from({ length: size }, () => Array(size).fill(''));
+            this.turn = 'X';
+            this.players = JSON.parse(localStorage.getItem('players')) || [];
+            this.renderBoard();
+            this.renderPlayers();
+        }
+
+        renderBoard() {
+            const gameDiv = document.getElementById('game');
+            gameDiv.innerHTML = '';
+            gameDiv.style.gridTemplateColumns = `repeat(${this.size}, 30px)`;
+            for (let i = 0; i < this.size; i++) {
+                for (let j = 0; j < this.size; j++) {
+                    const div = document.createElement('div');
+                    div.className = 'cell';
+                    div.textContent = this.board[i][j];
+                    div.onclick = () => this.makeMove(i, j);
+                    gameDiv.appendChild(div);
+                }
+            }
+        }
+
+        makeMove(row, col) {
+            if (this.board[row][col] !== '') return;
+            this.board[row][col] = this.turn;
+            if (this.checkWin(row, col)) {
+                alert(`${this.turn} thắng!`);
+                this.updateScore();
+                this.resetBoard();
+            } else {
+                this.turn = this.turn === 'X' ? 'O' : 'X';
+                this.renderBoard();
+            }
+        }
+
+        checkWin(row, col) {
+            const directions = [
+                [0, 1], [1, 0], [1, 1], [1, -1]
+            ];
+            for (const [dx, dy] of directions) {
+                let count = 1;
+                for (let step = 1; step < 5; step++) {
+                    const x = row + dx * step;
+                    const y = col + dy * step;
+                    if (x < 0 || y < 0 || x >= this.size || y >= this.size) break;
+                    if (this.board[x][y] === this.turn) count++;
+                    else break;
+                }
+                for (let step = 1; step < 5; step++) {
+                    const x = row - dx * step;
+                    const y = col - dy * step;
+                    if (x < 0 || y < 0 || x >= this.size || y >= this.size) break;
+                    if (this.board[x][y] === this.turn) count++;
+                    else break;
+                }
+                if (count >= 5) return true;
+            }
+            return false;
+        }
+
+        resetBoard() {
+            this.board = Array.from({ length: this.size }, () => Array(this.size).fill(''));
+            this.turn = 'X';
+            this.renderBoard();
+        }
+
+        addPlayer() {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) return;
+            const existing = this.players.find(p => p.name === name);
+            if (!existing) {
+                this.players.push(new Player(name));
+                this.savePlayers();
+            }
+            this.renderPlayers();
+        }
+
+        updateScore() {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) return;
+            const player = this.players.find(p => p.name === name);
+            if (player) player.score++;
+            this.savePlayers();
+            this.renderPlayers();
+        }
+
+        savePlayers() {
+            localStorage.setItem('players', JSON.stringify(this.players));
+        }
+
+        renderPlayers() {
+            const ul = document.getElementById('playerList');
+            ul.innerHTML = '';
+            this.players.forEach((p, i) => {
+                const li = document.createElement('li');
+                li.textContent = `${p.name}: ${p.score}`;
+                const delBtn = document.createElement('button');
+                delBtn.textContent = 'X';
+                delBtn.onclick = () => this.deletePlayer(i);
+                li.appendChild(delBtn);
+                ul.appendChild(li);
+            });
+        }
+
+        deletePlayer(index) {
+            this.players.splice(index, 1);
+            this.savePlayers();
+            this.renderPlayers();
+        }
+
+        searchPlayer() {
+            const query = document.getElementById('searchName').value.trim().toLowerCase();
+            const found = this.players.filter(p => p.name.toLowerCase().includes(query));
+            const ul = document.getElementById('playerList');
+            ul.innerHTML = '';
+            found.forEach((p, i) => {
+                const li = document.createElement('li');
+                li.textContent = `${p.name}: ${p.score}`;
+                ul.appendChild(li);
+            });
+        }
+
+        saveScore() {
+            this.savePlayers();
+            alert('Đã lưu điểm!');
+        }
+    }
+
+    const game = new Game();
+</script>
+</body>
+</html>
