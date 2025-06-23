@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Game caro</title>
+    <title>Caro Game vs Máy (Khó)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -43,7 +43,7 @@
     </style>
 </head>
 <body>
-<h1>Game caro</h1>
+<h1>Caro Game vs Máy (Khó)</h1>
 <div id="scoreBoard">
     <input type="text" id="playerName" placeholder="Tên người chơi" />
     <button onclick="game.addPlayer()">Thêm</button>
@@ -91,17 +91,19 @@
         makeMove(row, col) {
             if (this.board[row][col] !== '' || this.turn !== 'X') return;
             this.board[row][col] = 'X';
+            const lastMove = { row, col }; // lưu lại vị trí vừa đánh của người
+            this.turn = 'O';
             this.renderBoard();
-            if (this.checkWin(row, col)) {
-                setTimeout(() => {
+
+            setTimeout(() => {
+                if (this.checkWin(lastMove.row, lastMove.col)) {
                     alert('Bạn thắng!');
                     this.updateScore();
                     this.resetBoard();
-                }, 100);
-            } else {
-                this.turn = 'O';
-                setTimeout(() => this.aiMove(), 300);
-            }
+                } else {
+                    this.aiMove();
+                }
+            }, 300);
         }
 
         aiMove() {
